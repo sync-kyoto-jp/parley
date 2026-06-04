@@ -14,3 +14,8 @@ local.properties
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# 署名関連の秘密情報（絶対にコミットしない）
+keystore.properties
+*.jks
+*.keystore
