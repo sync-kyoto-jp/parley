@@ -19,3 +19,6 @@ local.properties
 keystore.properties
 *.jks
 *.keystore
+
+# Kotlin compiler cache (build artifact)
+.kotlin/
