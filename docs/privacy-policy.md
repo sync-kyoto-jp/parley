@@ -109,7 +109,3 @@ If we change this policy, we will update the "Last updated" date on this page.
 ### Contact
 OKADA, Tomoyuki
 Email: okada.tomoyuki@sync.kyoto.jp
-
----
-
-> 注 / Note: 本ポリシーはテンプレートです。実際の運用に合わせて内容をご確認のうえ、必要に応じて専門家にご相談ください。 / This is a template; please review it against your actual practices and consult a professional if needed.
