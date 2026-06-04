@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 起動時のウィンドウ背景（白フラッシュ防止）。Compose の配色は Theme.kt 側。 -->
+    <color name="brand_bg_dark">#0C0C12</color>
+</resources>

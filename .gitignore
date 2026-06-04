@@ -1,0 +1,16 @@
+*.iml
+.gradle/
+.idea/
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+/app/build/
+
+# 動作確認用スクリーンショット（コミット不要）
+/device-shot*.png
+
+# Claude Code local settings
+.claude/settings.local.json

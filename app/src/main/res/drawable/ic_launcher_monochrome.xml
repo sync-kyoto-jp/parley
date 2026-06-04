@@ -1,0 +1,11 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 吹き出し＋音声波を1パスで（evenOddで波部分を抜く）。色はシステムが着色。 -->
+    <path
+        android:fillColor="#FF000000"
+        android:fillType="evenOdd"
+        android:pathData="M40,30 h28 a11,11 0 0 1 11,11 v13 a11,11 0 0 1 -11,11 H53 l-11,10 v-10 h-2 a11,11 0 0 1 -11,-11 V41 a11,11 0 0 1 11,-11 z M44.5,46.5 a2.5,2.5 0 0 1 5,0 v3 a2.5,2.5 0 0 1 -5,0 z M52.5,41.5 a2.5,2.5 0 0 1 5,0 v13 a2.5,2.5 0 0 1 -5,0 z M60.5,45.5 a2.5,2.5 0 0 1 5,0 v5 a2.5,2.5 0 0 1 -5,0 z" />
+</vector>
