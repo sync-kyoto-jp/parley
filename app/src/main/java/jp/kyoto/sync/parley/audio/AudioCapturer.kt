@@ -6,7 +6,6 @@ import android.media.AudioRecord
 import android.media.MediaRecorder
 import jp.kyoto.sync.parley.core.Config
 import kotlin.concurrent.thread
-import kotlin.math.sqrt
 
 /**
  * 本体マイクから音声を取り込み、24kHz PCM16 mono(LE) のフレームを [onFrame] へ渡す。
@@ -15,8 +14,8 @@ import kotlin.math.sqrt
  * RECORD_AUDIO 権限は呼び出し側で取得済みであること。
  *
  * - 初期化・録音エラーは [onError] で通知する（無音や CPU ビジーループにしない）。
- * - 無音区間は送信しない簡易ゲート付き（コスト削減）。発話の頭切れを避けるため
- *   ハングオーバー（しばらく送り続ける猶予）を持たせている。
+ * - 音声は連続して送る。無音判定（VAD）やノイズ低減は OpenAI Realtime 側が行うため、
+ *   クライアント側でゲートを掛けると入力が分断され翻訳音声が途切れる。よって掛けない。
  */
 class AudioCapturer(
     private val onFrame: (ByteArray) -> Unit,
@@ -68,19 +67,13 @@ class AudioCapturer(
 
         worker = thread(name = "AudioCapturer") {
             val buf = ShortArray(frameSamples)
-            var voicedRemaining = 0
             try {
                 while (running) {
                     val n = rec.read(buf, 0, buf.size)
                     if (n > 0) {
                         val frame48 = if (n == buf.size) buf else buf.copyOf(n)
                         val frame24 = decimator.process(frame48)
-                        // 無音ゲート: しきい値超えで猶予をリセットし、猶予中だけ送信する。
-                        if (rms(frame24) >= SILENCE_RMS_THRESHOLD) voicedRemaining = HANGOVER_FRAMES
-                        if (voicedRemaining > 0) {
-                            voicedRemaining--
-                            onFrame(Resampler.shortsToBytesLE(frame24))
-                        }
+                        onFrame(Resampler.shortsToBytesLE(frame24))
                     } else if (n < 0 && running) {
                         // ERROR_INVALID_OPERATION(-3) など。放置するとビジーループになるため止める。
                         onError(IllegalStateException("マイク読み取りエラー (code=$n)"))
@@ -100,26 +93,5 @@ class AudioCapturer(
         runCatching { record?.stop() }
         record?.release()
         record = null
-    }
-
-    private fun rms(samples: ShortArray): Double {
-        if (samples.isEmpty()) return 0.0
-        var sum = 0.0
-        for (s in samples) {
-            val v = s.toInt()
-            sum += (v * v).toDouble()
-        }
-        return sqrt(sum / samples.size)
-    }
-
-    companion object {
-        /**
-         * 無音判定の RMS しきい値（PCM16 振幅、最大 32767）。約 -39dBFS。
-         * 低めにして発話の頭を取りこぼしにくくしている。環境に応じて調整可。
-         */
-        private const val SILENCE_RMS_THRESHOLD = 350.0
-
-        /** 無音と判定してからも送信を続けるフレーム数（100ms 単位 → 約0.8秒）。語尾切れ防止。 */
-        private const val HANGOVER_FRAMES = 8
     }
 }
