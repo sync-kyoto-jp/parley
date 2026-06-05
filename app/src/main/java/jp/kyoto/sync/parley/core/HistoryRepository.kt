@@ -11,7 +11,12 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
-/** 1 セッション分の会話。partnerText=相手→自分言語の訳、myText=自分→相手言語の訳。 */
+/**
+ * 1 セッション分の会話。
+ * partnerText=相手→自分言語の訳、myText=自分→相手言語の訳、
+ * partnerSourceText=相手の原文、mySourceText=自分の原文（バイリンガル履歴）。
+ * 原文系は旧データとの後方互換のため既定空文字。
+ */
 data class ChatSession(
     val id: String,
     val startedAt: Long,
@@ -19,6 +24,8 @@ data class ChatSession(
     val partnerLang: String,
     val partnerText: String,
     val myText: String,
+    val partnerSourceText: String = "",
+    val mySourceText: String = "",
 )
 
 /**
@@ -66,6 +73,8 @@ class HistoryRepository(context: Context) {
                     partnerLang = o.getString("partnerLang"),
                     partnerText = o.optString("partnerText"),
                     myText = o.optString("myText"),
+                    partnerSourceText = o.optString("partnerSourceText"),
+                    mySourceText = o.optString("mySourceText"),
                 )
             }
         }.getOrDefault(emptyList())
@@ -81,7 +90,9 @@ class HistoryRepository(context: Context) {
                     .put("myLang", s.myLang)
                     .put("partnerLang", s.partnerLang)
                     .put("partnerText", s.partnerText)
-                    .put("myText", s.myText),
+                    .put("myText", s.myText)
+                    .put("partnerSourceText", s.partnerSourceText)
+                    .put("mySourceText", s.mySourceText),
             )
         }
         // 一時ファイルへ書いてからアトミックに置き換える（同一 filesDir なので同一FS）。

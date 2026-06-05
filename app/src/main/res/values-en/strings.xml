@@ -62,4 +62,12 @@
     <string name="notif_running">Live translation running</string>
     <string name="error_no_mic_permission">Microphone permission is missing. Please allow it in the app\'s permission settings.</string>
     <string name="error_no_api_key">No API key set. Please add one in Settings.</string>
+
+    <!-- Language picker / bilingual captions / transcription model -->
+    <string name="cd_select_language">Select language</string>
+    <string name="label_original">Original</string>
+    <string name="transcription_model_label">Transcription model (for original captions)</string>
+    <string name="transcription_model_hint">Model used for the original-language captions. The translated text and audio are produced by a separate model.</string>
+    <string name="detail_partner_source">Partner (original)</string>
+    <string name="detail_you_source">You (original)</string>
 </resources>

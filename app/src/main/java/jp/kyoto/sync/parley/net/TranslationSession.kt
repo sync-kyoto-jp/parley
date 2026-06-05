@@ -22,6 +22,7 @@ import org.json.JSONObject
 class TranslationSession(
     private val apiKey: String,
     private val targetLang: String,
+    private val transcriptionModel: String,
     private val http: OkHttpClient,
     private val listener: Listener,
 ) {
@@ -78,7 +79,7 @@ class TranslationSession(
                     put(
                         "input",
                         JSONObject().apply {
-                            put("transcription", JSONObject().put("model", "gpt-realtime-whisper"))
+                            put("transcription", JSONObject().put("model", transcriptionModel))
                             // 相手が少し離れている場合は "far_field" も検証する。
                             put("noise_reduction", JSONObject().put("type", "near_field"))
                         },
