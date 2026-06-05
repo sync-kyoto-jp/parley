@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Mic
@@ -34,6 +35,8 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
@@ -49,6 +52,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -78,7 +84,9 @@ fun TranslationScreen(
     val mode by vm.mode.collectAsState()
     val conv by vm.conversation.collectAsState()
     val partnerText by vm.partnerTranscript.collectAsState()
+    val partnerSource by vm.partnerSourceTranscript.collectAsState()
     val myText by vm.myTranscript.collectAsState()
+    val mySource by vm.mySourceTranscript.collectAsState()
     val error by vm.errorMessage.collectAsState()
 
     val running = status == Status.RUNNING
@@ -123,6 +131,8 @@ fun TranslationScreen(
                 myLang = conv.myLang,
                 partnerLang = conv.partnerLang,
                 enabled = idle,
+                onSelectMy = vm::setMyLang,
+                onSelectPartner = vm::setPartnerLang,
                 onSwap = vm::swapDirection,
             )
             Spacer(Modifier.height(16.dp))
@@ -134,6 +144,7 @@ fun TranslationScreen(
                 accent = MaterialTheme.colorScheme.secondary,
                 active = running && mode == Mode.LISTENING,
                 text = partnerText,
+                source = partnerSource,
                 placeholder = stringResource(R.string.caption_partner_placeholder),
                 modifier = Modifier.weight(1f),
             )
@@ -145,6 +156,7 @@ fun TranslationScreen(
                 accent = MaterialTheme.colorScheme.tertiary,
                 active = running && mode == Mode.SPEAKING,
                 text = myText,
+                source = mySource,
                 placeholder = stringResource(R.string.caption_you_placeholder),
                 modifier = Modifier.weight(1f),
             )
@@ -187,7 +199,9 @@ fun TranslationScreen(
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
             )
-            if (idle && (partnerText.isNotEmpty() || myText.isNotEmpty())) {
+            val hasContent = partnerText.isNotEmpty() || myText.isNotEmpty() ||
+                partnerSource.isNotEmpty() || mySource.isNotEmpty()
+            if (idle && hasContent) {
                 TextButton(
                     onClick = vm::newConversation,
                     modifier = Modifier.fillMaxWidth(),
@@ -205,40 +219,87 @@ private fun LanguageSelector(
     myLang: Lang,
     partnerLang: Lang,
     enabled: Boolean,
+    onSelectMy: (Lang) -> Unit,
+    onSelectPartner: (Lang) -> Unit,
     onSwap: () -> Unit,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        LangPill(stringResource(R.string.label_you), myLang, Modifier.weight(1f))
+        LangDropdown(
+            label = stringResource(R.string.label_you),
+            selected = myLang,
+            enabled = enabled,
+            onSelect = onSelectMy,
+            modifier = Modifier.weight(1f),
+        )
         FilledTonalIconButton(onClick = onSwap, enabled = enabled) {
             Icon(Icons.Filled.SwapHoriz, contentDescription = stringResource(R.string.cd_swap_lang))
         }
-        LangPill(stringResource(R.string.label_partner), partnerLang, Modifier.weight(1f))
+        LangDropdown(
+            label = stringResource(R.string.label_partner),
+            selected = partnerLang,
+            enabled = enabled,
+            onSelect = onSelectPartner,
+            modifier = Modifier.weight(1f),
+        )
     }
 }
 
 @Composable
-private fun LangPill(label: String, lang: Lang, modifier: Modifier = Modifier) {
-    Surface(
-        shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)),
-        modifier = modifier,
-    ) {
-        Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-            Text(
-                label,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                lang.displayName,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
+private fun LangDropdown(
+    label: String,
+    selected: Lang,
+    enabled: Boolean,
+    onSelect: (Lang) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Box(modifier) {
+        Surface(
+            onClick = { expanded = true },
+            enabled = enabled,
+            shape = RoundedCornerShape(18.dp),
+            color = MaterialTheme.colorScheme.surface,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Row(
+                Modifier.padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        label,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        selected.displayName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                    )
+                }
+                Icon(
+                    Icons.Filled.ArrowDropDown,
+                    contentDescription = stringResource(R.string.cd_select_language),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            Lang.entries.forEach { lang ->
+                DropdownMenuItem(
+                    text = { Text(lang.displayName) },
+                    onClick = {
+                        onSelect(lang)
+                        expanded = false
+                    },
+                )
+            }
         }
     }
 }
@@ -251,6 +312,7 @@ private fun CaptionCard(
     accent: Color,
     active: Boolean,
     text: String,
+    source: String,
     placeholder: String,
     modifier: Modifier = Modifier,
 ) {
@@ -289,6 +351,7 @@ private fun CaptionCard(
                 }
             }
             Spacer(Modifier.height(10.dp))
+            // 訳文（主）。最新行へ自動スクロール。
             val scroll = rememberScrollState()
             LaunchedEffect(text) { scroll.animateScrollTo(scroll.maxValue) }
             Text(
@@ -301,6 +364,23 @@ private fun CaptionCard(
                 },
                 modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(scroll),
             )
+            // 原文（副）。あるときだけ小さく表示。
+            if (source.isNotEmpty()) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    stringResource(R.string.label_original),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                )
+                val srcScroll = rememberScrollState()
+                LaunchedEffect(source) { srcScroll.animateScrollTo(srcScroll.maxValue) }
+                Text(
+                    source,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.fillMaxWidth().height(44.dp).verticalScroll(srcScroll),
+                )
+            }
         }
     }
 }

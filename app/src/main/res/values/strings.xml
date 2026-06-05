@@ -62,4 +62,12 @@
     <string name="notif_running">同時通訳を実行中</string>
     <string name="error_no_mic_permission">マイクの権限がありません。アプリの権限設定から許可してください。</string>
     <string name="error_no_api_key">API キーが未設定です。設定画面から登録してください。</string>
+
+    <!-- 言語選択・バイリンガル字幕・文字起こしモデル -->
+    <string name="cd_select_language">言語を選択</string>
+    <string name="label_original">原文</string>
+    <string name="transcription_model_label">文字起こしモデル（原文字幕用）</string>
+    <string name="transcription_model_hint">原文（話者の言語）の字幕に使うモデルです。訳文・翻訳音声は別モデルが生成します。</string>
+    <string name="detail_partner_source">相手（原文）</string>
+    <string name="detail_you_source">あなた（原文）</string>
 </resources>

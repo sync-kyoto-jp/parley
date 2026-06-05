@@ -231,7 +231,13 @@ private fun HistoryDetail(session: ChatSession, onBack: () -> Unit) {
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            if (session.partnerSourceText.isNotBlank()) {
+                DetailBlock(stringResource(R.string.detail_partner_source), session.partnerSourceText)
+            }
             DetailBlock(stringResource(R.string.detail_partner, langName(session.myLang)), session.partnerText)
+            if (session.mySourceText.isNotBlank()) {
+                DetailBlock(stringResource(R.string.detail_you_source), session.mySourceText)
+            }
             DetailBlock(stringResource(R.string.detail_you, langName(session.partnerLang)), session.myText)
         }
     }

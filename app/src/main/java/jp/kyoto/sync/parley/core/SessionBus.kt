@@ -22,17 +22,25 @@ enum class Mode { LISTENING, SPEAKING }
  * 字幕は WebSocket 受信スレッド（incoming/outgoing で別スレッド）から更新されるため、
  * 追記は [update] によるアトミックな compare-and-set で行う。さらに長時間セッションで
  * 文字列が無限に伸びて再コンポーズが重くなるのを防ぐため、上限で古い側を間引く。
+ *
+ * 各方向で「訳文（output）」と「原文（source/input）」の2系統を持つ（バイリンガル字幕）。
  */
 object SessionBus {
     val status = MutableStateFlow(Status.IDLE)
     val mode = MutableStateFlow(Mode.LISTENING)
     val conversation = MutableStateFlow(Conversation.JA_EN)
 
-    /** 相手の発話を自分言語に訳した字幕（イヤホン側） */
+    /** 相手の発話を自分言語に訳した字幕（訳文・イヤホン側） */
     val partnerTranscript = MutableStateFlow("")
 
-    /** 自分の発話を相手言語に訳した字幕（スピーカー側） */
+    /** 相手の発話の原文（ソース言語）字幕 */
+    val partnerSourceTranscript = MutableStateFlow("")
+
+    /** 自分の発話を相手言語に訳した字幕（訳文・スピーカー側） */
     val myTranscript = MutableStateFlow("")
+
+    /** 自分の発話の原文（ソース言語）字幕 */
+    val mySourceTranscript = MutableStateFlow("")
 
     val errorMessage = MutableStateFlow<String?>(null)
 
@@ -40,11 +48,17 @@ object SessionBus {
     @Volatile
     var currentStartedAt: Long = 0L
 
-    /** 相手字幕にデルタを追記（スレッドセーフ・上限あり）。 */
+    /** 相手の訳文字幕にデルタを追記（スレッドセーフ・上限あり）。 */
     fun appendPartnerTranscript(delta: String) = append(partnerTranscript, delta)
 
-    /** 自分字幕にデルタを追記（スレッドセーフ・上限あり）。 */
+    /** 自分の訳文字幕にデルタを追記（スレッドセーフ・上限あり）。 */
     fun appendMyTranscript(delta: String) = append(myTranscript, delta)
+
+    /** 相手の原文字幕にデルタを追記。 */
+    fun appendPartnerSource(delta: String) = append(partnerSourceTranscript, delta)
+
+    /** 自分の原文字幕にデルタを追記。 */
+    fun appendMySource(delta: String) = append(mySourceTranscript, delta)
 
     private fun append(flow: MutableStateFlow<String>, delta: String) {
         if (delta.isEmpty()) return
@@ -60,18 +74,22 @@ object SessionBus {
 
     /** 新しいセッション開始: 画面をクリアし、開始時刻を記録する。 */
     fun beginSession() {
-        partnerTranscript.value = ""
-        myTranscript.value = ""
-        errorMessage.value = null
+        clearTranscripts()
         currentStartedAt = System.currentTimeMillis()
     }
 
     /** 画面の会話をクリアする（セッション識別子も破棄）。 */
     fun clearCurrent() {
-        partnerTranscript.value = ""
-        myTranscript.value = ""
-        errorMessage.value = null
+        clearTranscripts()
         currentStartedAt = 0L
+    }
+
+    private fun clearTranscripts() {
+        partnerTranscript.value = ""
+        partnerSourceTranscript.value = ""
+        myTranscript.value = ""
+        mySourceTranscript.value = ""
+        errorMessage.value = null
     }
 
     /** 字幕の保持上限（文字数）。これを超えると古い側から間引く。 */

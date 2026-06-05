@@ -18,6 +18,7 @@ import jp.kyoto.sync.parley.audio.AudioCapturer
 import jp.kyoto.sync.parley.audio.AudioPlayer
 import jp.kyoto.sync.parley.audio.Route
 import jp.kyoto.sync.parley.core.ApiKeyStore
+import jp.kyoto.sync.parley.core.AppSettings
 import jp.kyoto.sync.parley.core.Mode
 import jp.kyoto.sync.parley.core.SessionBus
 import jp.kyoto.sync.parley.core.Status
@@ -104,6 +105,7 @@ class TranslationService : Service() {
                     return@launch
                 }
 
+                val transcriptionModel = AppSettings(this@TranslationService).transcriptionModel.id
                 val conv = SessionBus.conversation.value
 
                 earphonePlayer = AudioPlayer(this@TranslationService, Route.EARPHONE).apply { start() }
@@ -112,6 +114,7 @@ class TranslationService : Service() {
                 incoming = TranslationSession(
                     apiKey = apiKey,
                     targetLang = conv.incomingTarget.code,
+                    transcriptionModel = transcriptionModel,
                     http = http,
                     listener = object : TranslationSession.Listener {
                         override fun onTranslatedAudio(pcm16: ByteArray) {
@@ -122,6 +125,10 @@ class TranslationService : Service() {
                             SessionBus.appendPartnerTranscript(text)
                         }
 
+                        override fun onInputTranscript(text: String) {
+                            SessionBus.appendPartnerSource(text) // 相手の原文
+                        }
+
                         override fun onError(t: Throwable) = fatalError(t)
                     },
                 ).also { it.connect() }
@@ -129,6 +136,7 @@ class TranslationService : Service() {
                 outgoing = TranslationSession(
                     apiKey = apiKey,
                     targetLang = conv.outgoingTarget.code,
+                    transcriptionModel = transcriptionModel,
                     http = http,
                     listener = object : TranslationSession.Listener {
                         override fun onTranslatedAudio(pcm16: ByteArray) {
@@ -139,6 +147,9 @@ class TranslationService : Service() {
                             SessionBus.appendMyTranscript(text)
                         }
 
+                        // 自分の原文は表示しない: 出力（訳）音声がスピーカーから流れ、本体マイクへ
+                        // 回り込んで（エコー）原文へ混入するため（例:「こんにちは。Guten Tag.」）。
+                        // 相手方向はイヤホン出力なのでエコーしにくく、原文を表示する。
                         override fun onError(t: Throwable) = fatalError(t)
                     },
                 ).also { it.connect() }
