@@ -10,6 +10,7 @@ import android.os.Build
 import jp.kyoto.sync.parley.core.Config
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
 
 /** 再生先 */
@@ -25,6 +26,10 @@ enum class Route { EARPHONE, SPEAKER }
  * 内部キューに積むだけにする。実際の `AudioTrack.write`（バッファ満杯時ブロック）
  * は専用の再生スレッドで行う。これにより、再生のつまりが字幕など他メッセージの
  * 受信処理を止めてしまうのを防ぐ。
+ *
+ * 翻訳音声は実時間より速くバースト配信されるため、**チャンクは破棄しない**
+ * （破棄すると再生が「プツプツ」途切れる）。キューに溜めて全て再生し、再生スレッドが
+ * 実時間ペースで掃き出す。暴走時のメモリ保険として、十分大きいバイト上限のみ設ける。
  */
 class AudioPlayer(
     private val context: Context,
@@ -32,6 +37,7 @@ class AudioPlayer(
 ) {
     private var track: AudioTrack? = null
     private val queue = LinkedBlockingQueue<ByteArray>()
+    private val queuedBytes = AtomicInteger(0)
     @Volatile private var running = false
     private var worker: Thread? = null
 
@@ -77,15 +83,19 @@ class AudioPlayer(
             try {
                 while (running) {
                     val buf = queue.poll(100, TimeUnit.MILLISECONDS) ?: continue
+                    queuedBytes.addAndGet(-buf.size)
                     var off = 0
                     while (off < buf.size && running) {
                         val w = t.write(buf, off, buf.size - off)
-                        if (w < 0) return@thread // ERROR_DEAD_OBJECT など。再生スレッドを終了。
+                        if (w < 0) return@thread // ERROR_DEAD_OBJECT など。再生不能なので終了。
                         off += w
                     }
                 }
             } catch (_: InterruptedException) {
                 // stop() による割り込み。正常終了。
+            } finally {
+                // 再生スレッド終了後は write() が積み続けないようにする（メモリ保護）。
+                running = false
             }
         }
     }
@@ -110,12 +120,16 @@ class AudioPlayer(
         if (target != null) t.preferredDevice = target
     }
 
-    /** 24kHz PCM16 mono(LE) を再生キューへ積む（非ブロッキング）。 */
+    /** 24kHz PCM16 mono(LE) を再生キューへ積む（非ブロッキング・チャンクは破棄しない）。 */
     fun write(pcm16: ByteArray) {
         if (!running) return
-        // ネットワークのバーストで貯まりすぎたら古いものを捨てて遅延を抑える。
-        while (queue.size >= MAX_QUEUED_CHUNKS) queue.poll()
+        // 通常はそのまま全て積む。暴走時のみメモリ保険として古い側を捨てる（通常は到達しない）。
+        while (queuedBytes.get() > MAX_QUEUED_BYTES) {
+            val dropped = queue.poll() ?: break
+            queuedBytes.addAndGet(-dropped.size)
+        }
         queue.offer(pcm16)
+        queuedBytes.addAndGet(pcm16.size)
     }
 
     fun stop() {
@@ -124,13 +138,17 @@ class AudioPlayer(
         worker?.join(300)
         worker = null
         queue.clear()
+        queuedBytes.set(0)
         runCatching { track?.stop() }
         track?.release()
         track = null
     }
 
     companion object {
-        /** 再生キューの上限（チャンク数）。これを超えたら古いチャンクを破棄。 */
-        private const val MAX_QUEUED_CHUNKS = 96
+        /**
+         * 再生キューの保険上限（バイト）。24kHz・16bit・mono = 48,000 B/s なので約10秒ぶん。
+         * 翻訳の1発話はこれより十分短いので通常は破棄が起きない。暴走（再生停止）時のメモリ保護用。
+         */
+        private const val MAX_QUEUED_BYTES = 48_000 * 10
     }
 }
