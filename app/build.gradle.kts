@@ -14,11 +14,11 @@ val keystoreProperties = Properties().apply {
 }
 
 android {
-    namespace = "jp.kyoto.sync.honnyaku"
+    namespace = "jp.kyoto.sync.parley"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "jp.kyoto.sync.honnyaku"
+        applicationId = "jp.kyoto.sync.parley"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
@@ -38,7 +38,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
@@ -78,4 +79,6 @@ dependencies {
 
     implementation(libs.okhttp)
     implementation(libs.kotlinx.coroutines.android)
+
+    testImplementation(libs.junit)
 }

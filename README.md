@@ -38,9 +38,9 @@ OpenAI の `gpt-realtime-translate` を使った、**リアルタイム同時通
 ## 構成
 
 ```
-Parley/ (フォルダ名は ホンニャクコンニャク のまま)
+Parley/
 ├─ app/                       … Android アプリ (Kotlin + Jetpack Compose)
-│  └─ src/main/java/jp/kyoto/sync/honnyaku/   ← 内部パッケージ名は honnyaku のまま（実害なし）
+│  └─ src/main/java/jp/kyoto/sync/parley/
 │     ├─ MainActivity.kt              キー未設定なら設定画面、設定済みならメイン画面
 │     ├─ core/
 │     │  ├─ Config.kt                 エンドポイント・音声定数
