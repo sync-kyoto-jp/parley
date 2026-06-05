@@ -1,4 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Parley</string>
+
+    <!-- 共通 -->
+    <string name="action_back">戻る</string>
+    <string name="action_delete">削除</string>
+    <string name="action_cancel">キャンセル</string>
+
+    <!-- メイン画面 -->
+    <string name="cd_stop">停止</string>
+    <string name="cd_history">履歴</string>
+    <string name="cd_settings">設定</string>
+    <string name="cd_swap_lang">言語を入れ替え</string>
+    <string name="label_you">あなた</string>
+    <string name="label_partner">相手</string>
+    <string name="target_arrow">→ %1$s</string>
+    <string name="caption_partner_placeholder">相手の声がここに訳されます</string>
+    <string name="caption_you_placeholder">あなたの声がここに訳されます</string>
+    <string name="status_connecting">接続中…</string>
+    <string name="status_idle">停止中</string>
+    <string name="status_speaking">あなたが発話中</string>
+    <string name="status_listening">相手の声を翻訳中</string>
+    <string name="status_error">エラー</string>
+    <string name="error_prefix">⚠ %1$s</string>
+    <string name="hint_speaking">話してOK（指を離すと聞き取りに戻る）</string>
+    <string name="hint_hold_to_talk">押し続けて話す</string>
+    <string name="hint_tap_to_start">タップして開始</string>
+    <string name="cd_start">開始</string>
+    <string name="new_conversation">新しい会話（履歴に保存してクリア）</string>
+
+    <!-- API キー設定画面 -->
+    <string name="api_key_setup_title">API キー設定</string>
+    <string name="tagline">話す言語が違っても、すぐ通じる。</string>
+    <string name="api_key_explain">OpenAI の API キーを入力してください。キーはこの端末内に暗号化して保存され、翻訳のために OpenAI へ直接送信される以外には使われません。</string>
+    <string name="api_key_label">API キー</string>
+    <string name="api_key_hint">sk-…</string>
+    <string name="action_show">表示</string>
+    <string name="action_hide">隠す</string>
+    <string name="get_api_key">  API キーを取得 (platform.openai.com)</string>
+    <string name="info_tier">• gpt-realtime-translate が使えるTierのキーとOpenAIの支払い設定が必要です。</string>
+    <string name="info_billing">• 料金はあなたのOpenAIアカウントに従量で発生します（音声 約 $0.034/分・方向ごと）。</string>
+    <string name="info_local">• キーは端末内に暗号化保存。アンインストールで消えます。</string>
+    <string name="save_and_start">保存して始める</string>
+    <string name="delete_saved_key">保存済みのキーを削除</string>
+
+    <!-- 履歴画面 -->
+    <string name="history_title">会話履歴</string>
+    <string name="cd_delete_all">すべて削除</string>
+    <string name="history_empty">まだ履歴はありません</string>
+    <string name="delete_all_title">すべて削除</string>
+    <string name="delete_all_message">保存した会話履歴をすべて削除します。よろしいですか？</string>
+    <string name="delete_one_title">削除</string>
+    <string name="delete_one_message">この会話を削除しますか？</string>
+    <string name="history_langs">あなた: %1$s  ・  相手: %2$s</string>
+    <string name="detail_partner">相手 → %1$s</string>
+    <string name="detail_you">あなた → %1$s</string>
+    <string name="empty_text">（なし）</string>
+
+    <!-- 通知 / サービス -->
+    <string name="notif_channel_name">同時通訳</string>
+    <string name="notif_running">同時通訳を実行中</string>
+    <string name="error_no_mic_permission">マイクの権限がありません。アプリの権限設定から許可してください。</string>
+    <string name="error_no_api_key">API キーが未設定です。設定画面から登録してください。</string>
 </resources>
